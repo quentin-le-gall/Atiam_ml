@@ -33,7 +33,7 @@ def import_dataset(classPath, typeD):
         for c in range(nbClasses):
             classData["name"].append(classesPaths[c])
             # Files for each class
-            classFiles = [];
+            classFiles = []
             for item in os.listdir(classPath + '/' + classesPaths[c]):
                 if (os.path.splitext(item)[1][1:] in audioExt):
                     classFiles.append(item)
@@ -45,35 +45,35 @@ def import_dataset(classPath, typeD):
             fullNbFiles = fullNbFiles + classData["nb_files"][c]
         # Linearize into one flat structure
         filenames = []
-        classes = [];
-        curStart = 1;
+        classes = []
+        curStart = 1
         for c in range(nbClasses):
-            nbFiles = classData["nb_files"][c];
-            curFiles = classData["filenames"][c];
-            filenames = filenames + curFiles;
-            classes = classes + np.ndarray.tolist(np.repeat(c, nbFiles));
-            curStart = curStart + nbFiles;
-        dataStruct = {};
-        dataStruct["filenames"] = filenames;
-        dataStruct["classes"] = np.array(classes);
-        dataStruct["class_names"] = classData["name"];
+            nbFiles = classData["nb_files"][c]
+            curFiles = classData["filenames"][c]
+            filenames = filenames + curFiles
+            classes = classes + np.ndarray.tolist(np.repeat(c, nbFiles))
+            curStart = curStart + nbFiles
+        dataStruct = {}
+        dataStruct["filenames"] = filenames
+        dataStruct["classes"] = np.array(classes)
+        dataStruct["class_names"] = classData["name"]
     elif typeD == 'music-speech':
         # Keep track of the full number of files
-        fullNbFiles = 0;
-        print('    - Importing dataset %s.\n' % classPath);
-        classFiles = [];
-        labFiles = [];
+        fullNbFiles = 0
+        print('    - Importing dataset %s.\n' % classPath)
+        classFiles = []
+        labFiles = []
         # Parse through the audio files
         for item in os.listdir(classPath + '/music/'):
             if (os.path.splitext(item)[1][1:] in audioExt):
-                classFiles.append(classPath + '/music/' + item);
+                classFiles.append(classPath + '/music/' + item)
                 fPath = os.path.splitext(item)[0]
-                labFiles.append(classPath + '/labels/' + fPath + '.lab');
-        dataStruct = {};
-        dataStruct["filenames"] = classFiles;
-        dataStruct["labfiles"] = labFiles;
+                labFiles.append(classPath + '/labels/' + fPath + '.lab')
+        dataStruct = {}
+        dataStruct["filenames"] = classFiles
+        dataStruct["labfiles"] = labFiles
     else:
-        raise Error('Unknown dataset type ' + typeD);
+        raise Error('Unknown dataset type ' + typeD)
     return dataStruct
 
 #
@@ -97,13 +97,13 @@ def compute_transforms(dataStruct, verbose = False):
     dataStruct["spectrum_mel"] = []
     dataStruct["spectrum_chroma"] = []
     dataStruct["spectrum_CQT"] = []
-    print('    - Performing transforms.');
+    print('    - Performing transforms.')
     import warnings
     warnings.filterwarnings('ignore')
     # Perform an analysis of spectral transform for each
     for f in range(fullNbFiles):
         if (verbose):
-            print('      * %s.' % dataStruct["filenames"][f]);
+            print('      * %s.' % dataStruct["filenames"][f])
         sig, sr = librosa.load(dataStruct["filenames"][f], mono=True, offset=0)
         if (sr != refSr):
             sig = librosa.resample(sig, sr, (sr/2))
@@ -111,17 +111,17 @@ def compute_transforms(dataStruct, verbose = False):
         dataStruct["srate"].append(sr)
         # Compute the FFT 
         psc = librosa.stft(sig, n_fft=fSize, win_length=wSize, hop_length=hSize, window='blackman')
-        powerspec, phasespec = librosa.magphase(psc);
+        powerspec, phasespec = librosa.magphase(psc)
         dataStruct["spectrum_power"].append(powerspec[:(fSize//2), :])
         # Compute the mel spectrogram        
         wMel = librosa.feature.melspectrogram(sig, sr=sr, n_fft=fSize, hop_length=hSize)
-        dataStruct["spectrum_mel"].append(wMel);
+        dataStruct["spectrum_mel"].append(wMel)
         # Compute the chromagram
         wChroma = librosa.feature.chroma_stft(S=powerspec**2, sr=sr)
-        dataStruct["spectrum_chroma"].append(wChroma);
+        dataStruct["spectrum_chroma"].append(wChroma)
         # Compute the Constant-Q transform
         Xcq = librosa.cqt(sig, sr=refSr, n_bins=nBins, fmin=fMin, bins_per_octave=12 * 2)
-        dataStruct["spectrum_CQT"].append(np.abs(Xcq));
+        dataStruct["spectrum_CQT"].append(np.abs(Xcq))
     return dataStruct
 
 #
@@ -144,7 +144,7 @@ def compute_features(dataStruct, verbose = False):
         dataStruct[f] = []
         dataStruct[f + '_mean'] = []
         dataStruct[f + '_std'] = []
-    print('    - Performing features.');
+    print('    - Performing features.')
     # Computing the set of features
     for curFile in range(nbFiles):
         if (verbose):
